@@ -1,0 +1,20 @@
+spring.application.name: PushOneSignal
+
+
+app :
+  oneSignal :
+    hostName : 'https://onesignal.com'
+    appId : ad800ccb-4ead-4bce-8aab-b58af0548015
+    restApiKey : ZGI1YWQwMjYtMjM0Zi00YjA4LWFmYzctZWIxMDcyYmM4ZmU5
+    api :
+      createNotification : '/api/v1/notifications'
+    statusCode :
+        success :
+          - 200
+          - 201
+          - 202
+        error :
+          - 400
+          - 404
+          - 409
+          - 429
