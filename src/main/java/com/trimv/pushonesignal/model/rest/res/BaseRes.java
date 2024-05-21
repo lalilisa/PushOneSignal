@@ -17,5 +17,5 @@ public class BaseRes<T> {
     private Integer statusCode;
     private boolean isError = false;
     private T data;
-    private List<Error> errors = new ArrayList<>();
+    private List<Object> errors = new ArrayList<>();
 }

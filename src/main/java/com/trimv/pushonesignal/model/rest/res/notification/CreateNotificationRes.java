@@ -1,15 +1,20 @@
-package com.trimv.pushonesignal.model.rest.req;
+package com.trimv.pushonesignal.model.rest.res.notification;
+
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ExternalUserId {
+@Getter
+@Setter
+public class CreateNotificationRes {
 
+    @JsonProperty("id")
+    private String notificationId;
     @JsonProperty("external_id")
     private String externalId;
 }

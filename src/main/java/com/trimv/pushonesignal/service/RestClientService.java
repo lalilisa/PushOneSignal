@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 
 
 import okhttp3.*;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
 
@@ -35,26 +36,27 @@ public class RestClientService {
         long t = System.currentTimeMillis();
         Request request = new Request.Builder()
                 .url(createQueryParamUrl(url, params))
-                .method(method, createRequestBody(body))
+                .method(method, HttpMethod.GET.name().equals(method) ? null : createRequestBody(body))
                 .headers(headers)
                 .build();
         log.info(" start call api {}", url);
         Response response = client.newCall(request).execute();
-        log.info(" start call api {} took {}", url, System.currentTimeMillis() - t);
+        String bodyJsonStr = Objects.requireNonNull(response.body()).string();
         if (appConf.getOneSignal().getStatusCode().getSuccess().contains(response.code())) {
-            R data = objectMapper.readValue(Objects.requireNonNull(response.body()).string(), resClazz);
+            log.info("call api {} took {} with res {}", url, System.currentTimeMillis() - t, bodyJsonStr);
+            R data = objectMapper.readValue(bodyJsonStr, resClazz);
             BaseRes<R> res = new BaseRes<>();
             res.setError(false);
             res.setStatusCode(response.code());
             res.setData(data);
             return res;
         } else {
+            log.error("call api {} took {} with res {}", url, System.currentTimeMillis() - t, bodyJsonStr);
             BaseRes<R> res = new BaseRes<>();
             res.setError(true);
             res.setStatusCode(response.code());
-            List<Error> errors = objectMapper.readValue(Objects.requireNonNull(response.body()).string(), new TypeReference<>() {
-            });
-            res.setErrors(errors);
+            Map errors = objectMapper.readValue(bodyJsonStr, HashMap.class);
+            res.setErrors((List<Object>) errors.get("errors"));
             return res;
         }
     }

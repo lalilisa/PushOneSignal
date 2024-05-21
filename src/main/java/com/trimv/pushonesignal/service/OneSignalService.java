@@ -3,22 +3,23 @@ package com.trimv.pushonesignal.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.trimv.pushonesignal.config.AppConf;
-import com.trimv.pushonesignal.model.rest.common.Properties;
-import com.trimv.pushonesignal.model.rest.common.Subscriptions;
-import com.trimv.pushonesignal.model.rest.req.CreateUserOneSignal;
-import com.trimv.pushonesignal.model.rest.req.ExternalUserId;
+
+import com.trimv.pushonesignal.model.rest.common.Languages;
+import com.trimv.pushonesignal.model.rest.req.notification.SendMultipleAliasReq;
 import com.trimv.pushonesignal.model.rest.res.BaseRes;
-import com.trimv.pushonesignal.model.rest.res.CreateUserRes;
+import com.trimv.pushonesignal.model.rest.res.notification.CreateNotificationRes;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.*;
-
-import org.jetbrains.annotations.NotNull;
+import okhttp3.Headers;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 
 @RequiredArgsConstructor
@@ -27,64 +28,38 @@ import java.util.*;
 public class OneSignalService {
 
     private final AppConf appConf;
-    private final ObjectMapper objectMapper;
     private final RestClientService restClientService;
 
-    public void createUser() {
-//        CloseableHttpClient httpClient = HttpClientBuilder.create().build();
-//        HttpPost httpPost = new HttpPost();
-//        httpPost.setHeaders(createHeaders().toArray(new Header[0]));
-//        HttpEntity  httpEntity = new Obje
-//        httpPost.setEntity();
-//        httpClient.execute(httpPost,httpResponse -> {
-//            return  null;
-//        });
-        OkHttpClient client = new OkHttpClient();
 
-        MediaType mediaType = MediaType.parse("application/json");
-        String content = "{\"identity\":{\"external_id\":\"132\"}}";
-        RequestBody requestBody = RequestBody.create(content, mediaType);
+    public void sendNotificationByExternalId(List<String> userIds, String titleEn, String titleVn, String contentVi, String contentEn, Map<String, Object> customData) {
+        List<String> externalIdValues = userIds.stream().map(Object::toString).collect(Collectors.toList());
+        Languages contents = Languages.builder().en(contentEn).vi(contentVi).build();
+        Languages titles = Languages.builder().en(titleEn).vi(titleVn).build();
+        customData = customData != null ? customData : new HashMap<>();
+        SendMultipleAliasReq body = SendMultipleAliasReq.create(appConf.getOneSignal().getAppId(), "external_id", externalIdValues, contents, titles, customData);
+        try {
+            BaseRes<CreateNotificationRes> res = restClientService.processRequest(
+                    appConf.getOneSignal().getApi().getCreateNotification(),
+                    HttpMethod.POST.name(),
+                    createHeadersOnesignal(),
+                    new HashMap<>(), body, CreateNotificationRes.class);
+            log.info("res {}",res);
+        } catch (Exception e) {
+            log.error("", e);
+        }
+    }
 
-        Request request = new Request.Builder()
-                .url("https://api.onesignal.com/apps/" + appConf.getOneSignal().getAppId() + "/users")
-                .post(requestBody)
-                .addHeader("accept", "application/json")
-                .addHeader("content-type", "application/json")
+    public Headers createHeadersOnesignal() {
+        return new Headers.Builder()
+                .add("accept", "application/json")
+                .add("content-type", "application/json")
+                .add("Authorization", "Basic "+ appConf.getOneSignal().getRestApiKey())
                 .build();
-
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                log.error("", e);
-
-            }
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                System.out.println(response.body().string());
-            }
-        });
     }
 
     @PostConstruct
-    public void testCreateUser() throws Exception {
-//        createUser();
-        Headers headers = new Headers.Builder()
-                .add("accept", "application/json")
-                .add("content-type", "application/json").build();
-        String url = "https://api.onesignal.com/apps/" + appConf.getOneSignal().getAppId() + "/users";
-        Subscriptions subscriptions = Subscriptions.builder()
-                .type("ChromePush")
-                .token("13212313212313")
-                .enabled(true)
-                .build();
-        CreateUserOneSignal createUserOneSignal = CreateUserOneSignal.builder()
-                .identity(new ExternalUserId("1999"))
-                .properties(new Properties())
-                .subscriptions(Collections.singletonList(subscriptions))
-                .build();
-        BaseRes<CreateUserRes> res = restClientService.processRequest(url, "POST", headers, new HashMap<>(), createUserOneSignal, CreateUserRes.class);
-        log.info("res {}", res);
+    public void  test(){
+        sendNotificationByExternalId(List.of("cuc237"),"noti","noti","Hello","hello",new HashMap<>());
     }
-
 
 }

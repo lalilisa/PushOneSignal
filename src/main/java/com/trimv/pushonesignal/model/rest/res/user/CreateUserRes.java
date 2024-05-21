@@ -1,4 +1,4 @@
-package com.trimv.pushonesignal.model.rest.res;
+package com.trimv.pushonesignal.model.rest.res.user;
 
 import com.trimv.pushonesignal.model.rest.common.Identity;
 import com.trimv.pushonesignal.model.rest.common.Properties;

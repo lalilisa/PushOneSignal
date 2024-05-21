@@ -1,4 +1,4 @@
-package com.trimv.pushonesignal.model.rest.req;
+package com.trimv.pushonesignal.model.rest.req.user;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;
